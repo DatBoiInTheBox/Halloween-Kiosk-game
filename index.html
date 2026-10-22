@@ -9,6 +9,8 @@ html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:radial-gradient(ellipse at 50% 0,#3a1b5e,var(--bg) 62%);color:var(--tx);font:500 20px Fredoka,system-ui,sans-serif}
 [hidden]{display:none!important}
+.i{width:1em;height:1em;display:inline-block;vertical-align:-.15em}
+button *{pointer-events:none}
 #app{height:100%;padding:14px}
 #hw,#game{height:100%;display:flex;flex-direction:column;gap:12px}
 h1{font:400 clamp(52px,12vw,104px)/1 Creepster,Georgia,serif;color:var(--or);margin:0;text-align:center;text-shadow:0 0 26px #ff7a1a99;letter-spacing:2px;animation:fl 7s infinite}
@@ -57,6 +59,33 @@ function beep(f,d=.15){try{AC=AC||new(window.AudioContext||webkitAudioContext)()
 const S=$('#stage'),SC=$('#score');
 function end(m){stop();const o=document.createElement('div');o.className='ov';o.innerHTML=`<b>${m[0]}</b><div>${m[1]}</div><div><button class="btn" id="ag">Play again</button> <button class="btn" id="hm" style="background:var(--pu);color:#fff">All games</button></div>`;S.append(o);$('#ag',o).onclick=()=>play(cur);$('#hm',o).onclick=home;beep(m[0].includes('!')&&!/Oops|Boo|over/.test(m[0])?880:200,.4)}
 
+/* Built-in vector icons: the kiosk has no emoji font, so every emoji is swapped for an SVG */
+const I={
+pumpkin:`<ellipse cx="32" cy="38" rx="25" ry="20" fill="#ff7a1a" stroke="#b34700" stroke-width="3"/><rect x="29" y="8" width="7" height="11" rx="2" fill="#5a8f29"/><path d="M16 30l10-2-3 9zM48 30l-10-2 3 9z" fill="#2a0f00"/><path d="M18 45q14 10 28 0l-5-4-4 3-5-4-5 4-4-3z" fill="#2a0f00"/>`,
+ghost:`<path d="M10 58V28a22 22 0 0 1 44 0v30l-7-6-7 6-8-6-8 6-7-6z" fill="#f4f0ff"/><circle cx="23" cy="28" r="4.5" fill="#222"/><circle cx="41" cy="28" r="4.5" fill="#222"/><ellipse cx="32" cy="41" rx="4" ry="5.5" fill="#222"/>`,
+candy:`<path d="M18 32L3 20v24zM46 32l15-12v24z" fill="#ff9bd0"/><circle cx="32" cy="32" r="15" fill="#ff4fa3"/><path d="M25 22q7 10 0 20" stroke="#fff" stroke-width="3" fill="none"/>`,
+pop:`<rect x="30" y="36" width="4" height="24" fill="#eee"/><circle cx="32" cy="24" r="18" fill="#44c8f5"/><path d="M32 24m-9 0a9 9 0 1 1 9 9" stroke="#fff" stroke-width="4" fill="none"/>`,
+vamp:`<circle cx="32" cy="36" r="22" fill="#e8dfff"/><path d="M9 32Q10 6 32 8Q54 6 55 32Q44 18 32 21Q20 18 9 32z" fill="#222"/><circle cx="24" cy="36" r="3" fill="#c00"/><circle cx="40" cy="36" r="3" fill="#c00"/><path d="M22 46q10 6 20 0" stroke="#222" stroke-width="2" fill="none"/><path d="M25 47l3 9 3-8zM39 47l-3 9-3-8z" fill="#fff" stroke="#222"/>`,
+bat:`<path d="M32 26Q22 10 2 14Q10 22 8 34Q16 28 22 40Q28 32 32 40Q36 32 42 40Q48 28 56 34Q54 22 62 14Q42 10 32 26z" fill="#8a5ad8"/><path d="M26 22l2-9 4 6 4-6 2 9z" fill="#8a5ad8"/><circle cx="28" cy="27" r="2" fill="#fff"/><circle cx="36" cy="27" r="2" fill="#fff"/>`,
+spider:`<path d="M32 34L8 14M32 34L3 30M32 34L6 48M32 34L14 60M32 34L56 14M32 34L61 30M32 34L58 48M32 34L50 60" stroke="#c9b6ff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="39" r="13" fill="#3b2a4d" stroke="#c9b6ff" stroke-width="2"/><circle cx="32" cy="23" r="8" fill="#3b2a4d" stroke="#c9b6ff" stroke-width="2"/><circle cx="29" cy="22" r="2" fill="#ff3b3b"/><circle cx="35" cy="22" r="2" fill="#ff3b3b"/>`,
+skull:`<path d="M32 5C16 5 9 17 11 30c1 6 6 8 9 10v11h24V40c3-2 8-4 9-10C55 17 48 5 32 5z" fill="#f2efe6"/><circle cx="22" cy="30" r="6" fill="#222"/><circle cx="42" cy="30" r="6" fill="#222"/><path d="M32 36l-3 7h6z" fill="#222"/><path d="M26 44v7M32 44v7M38 44v7" stroke="#222" stroke-width="2"/>`,
+witch:`<path d="M32 3L17 42h30z" fill="#3a2266" stroke="#9b5cff" stroke-width="2"/><ellipse cx="32" cy="46" rx="27" ry="8" fill="#3a2266" stroke="#9b5cff" stroke-width="2"/><rect x="21" y="34" width="22" height="6" fill="#ff7a1a"/>`,
+basket:`<path d="M14 26a18 16 0 0 1 36 0" fill="none" stroke="#6b3d10" stroke-width="5"/><path d="M5 26h54l-8 31H13z" fill="#c8843a" stroke="#6b3d10" stroke-width="3"/><path d="M22 30l3 23M32 30v23M42 30l-3 23" stroke="#6b3d10" stroke-width="2"/>`,
+hammer:`<rect x="28" y="22" width="9" height="38" rx="3" fill="#c8843a"/><rect x="8" y="6" width="48" height="22" rx="6" fill="#a9afc6" stroke="#555" stroke-width="2"/>`,
+boom:`<path d="M32 2l8 16 17-8-6 17 13 6-15 7 9 15-18-5-4 16-6-16-17 7 7-17L2 31l16-5-5-17 15 8z" fill="#ffd23a" stroke="#ff7a1a" stroke-width="2"/>`,
+heart:`<path d="M32 57S5 40 5 22a14 14 0 0 1 27-5 14 14 0 0 1 27 5C59 40 32 57 32 57z" fill="#ff3b5c"/>`,
+star:`<path d="M32 3l9 19 20 3-15 14 4 21-18-10-18 10 4-21L3 25l20-3z" fill="#ffd23a"/>`,
+clock:`<circle cx="32" cy="33" r="25" fill="none" stroke="currentColor" stroke-width="6"/><path d="M32 17v17l11 6" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+up:`<path d="M32 10L58 54H6z" fill="currentColor"/>`,down:`<path d="M32 54L58 10H6z" fill="currentColor"/>`,left:`<path d="M10 32L54 6v52z" fill="currentColor"/>`,right:`<path d="M54 32L10 6v52z" fill="currentColor"/>`};
+const EM={'🎃':'pumpkin','👻':'ghost','🍬':'candy','🍭':'pop','🧛':'vamp','🦇':'bat','🕷':'spider','💀':'skull','🧙':'witch','🧺':'basket','🔨':'hammer','💥':'boom','❤':'heart','⭐':'star','⏱':'clock','◀':'left','▶':'right','▲':'up','▼':'down'};
+const ic=n=>`<svg class="i" viewBox="0 0 64 64">${I[n]}</svg>`,RX=new RegExp(Object.keys(EM).join('|'),'g'),IM={};
+Object.keys(I).forEach(n=>{IM[n]=new Image();IM[n].src='data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" color="#fff1dc">${I[n]}</svg>`)});
+const dr=(x,e,cx,cy,z)=>{const m=IM[EM[e.replace(/\uFE0F/g,'')]];if(m&&m.complete)x.drawImage(m,cx-z/2,cy-z/2,z,z)};
+function fix(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),L=[];while(w.nextNode())L.push(w.currentNode);
+ L.forEach(t=>{const v=t.nodeValue.replace(/\uFE0F/g,'');RX.lastIndex=0;if(!RX.test(v))return;RX.lastIndex=0;const sp=document.createElement('span');sp.innerHTML=v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(RX,m=>ic(EM[m]));t.replaceWith(sp)})}
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType==1)fix(n);else if(n.nodeType==3&&n.parentNode)fix(n.parentNode)}))).observe(document.body,{childList:true,subtree:true});
+fix(document.body);
+
 /* 1. Ghost Tic-Tac-Toe */
 function ttt(s){
  let b=Array(9).fill(''),done=0,busy=0;const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
@@ -78,7 +107,7 @@ function maze(s){
  const x=$('canvas',s).getContext('2d');
  const draw=()=>{x.clearRect(0,0,540,720);x.strokeStyle='#ff7a1a';x.lineWidth=5;x.lineCap='round';x.beginPath();
   c.forEach((v,i)=>{const X=i%W*Z,Y=(i/W|0)*Z;if(v&1){x.moveTo(X,Y);x.lineTo(X+Z,Y)}if(v&2){x.moveTo(X+Z,Y);x.lineTo(X+Z,Y+Z)}if(v&4){x.moveTo(X,Y+Z);x.lineTo(X+Z,Y+Z)}if(v&8){x.moveTo(X,Y);x.lineTo(X,Y+Z)}});x.stroke();
-  x.font='40px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🍬',(W-1)*Z+30,(H-1)*Z+32);x.fillText('🎃',p%W*Z+30,(p/W|0)*Z+32)};
+  dr(x,'🍬',(W-1)*Z+30,(H-1)*Z+30,46);dr(x,'🎃',p%W*Z+30,(p/W|0)*Z+30,46)};
  const go=d=>{if(won||c[p]&(1<<d))return;p+=D[d][1]*W+D[d][0];mv++;SC.textContent=mv+' steps';beep(300+mv%8*25,.05);draw();if(p==W*H-1){won=1;end(['You escaped!',`Found the candy in ${mv} steps 🍬`])}};
  $('.pad',s).onpointerdown=e=>{const d=e.target.dataset.d;if(d==null)return;go(+d);const t=setInterval(()=>go(+d),170);tm.push(t);const u=()=>clearInterval(t);addEventListener('pointerup',u,{once:true});addEventListener('pointercancel',u,{once:true})};
  draw();
@@ -113,9 +142,9 @@ function catchG(s){
  cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);mvTo(e)};cv.onpointermove=mvTo;
  const up=()=>SC.textContent='❤️'.repeat(Math.max(L,0))+'  ⭐ '+sc;up();
  every(()=>{f++;if(f%Math.max(16,42-sc)==0)it.push({x:30+R(480),y:-30,v:4+Math.random()*3+sc/14,e:Math.random()<.3?'🕷️':['🍬','🍭','🎃'][R(3)]});
-  x.clearRect(0,0,540,720);x.font='44px serif';x.textAlign='center';x.textBaseline='middle';
-  it=it.filter(o=>{o.y+=o.v;if(o.y>650&&o.y<705&&Math.abs(o.x-bx)<58){if(o.e=='🕷️'){L--;beep(120,.3)}else{sc++;beep(800,.06)}up();return false}x.fillText(o.e,o.x,o.y);return o.y<740});
-  x.font='72px serif';x.fillText('🧺',bx,680);
+  x.clearRect(0,0,540,720);
+  it=it.filter(o=>{o.y+=o.v;if(o.y>650&&o.y<705&&Math.abs(o.x-bx)<58){if(o.e=='🕷️'){L--;beep(120,.3)}else{sc++;beep(800,.06)}up();return false}dr(x,o.e,o.x,o.y,52);return o.y<740});
+  dr(x,'🧺',bx,680,84);
   if(L<=0)end(['Game over!',`You caught ${sc} treats 🍬`])},25);
 }
 
@@ -139,7 +168,7 @@ function word(s){
  const next=()=>{if(r>=5)return end(['Spell-tacular!',`You unscrambled ${sc} of 5`]);w=Q[r][0];$('#h',s).textContent=`Word ${r+1} of 5. Hint: ${Q[r][1]}`;do tl=sh(w.split(''));while(tl.join('')==w);an=[];SC.textContent='⭐ '+sc;show()};
  s.onpointerdown=e=>{const b=e.target,d=b.dataset;if(b.id=='sk'){r++;return next()}
   if(d.t!=null&&an.length<w.length){an.push(+d.t);beep(500,.05)}else if(d.a!=null&&an[+d.a]!=null){an.splice(+d.a,1)}else return;show();
-  if(an.length==w.length){if(an.map(i=>tl[i]).join('')==w){sc++;r++;beep(880,.3);$('#h',s).textContent='Correct! 🎉';later(next,800)}else $('#h',s).textContent='Not quite. Tap a letter slot to remove it.'}};
+  if(an.length==w.length){if(an.map(i=>tl[i]).join('')==w){sc++;r++;beep(880,.3);$('#h',s).textContent='Correct!';later(next,800)}else $('#h',s).textContent='Not quite. Tap a letter slot to remove it.'}};
  next();
 }
 
