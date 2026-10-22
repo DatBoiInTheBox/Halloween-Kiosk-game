@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Haunted Arcade</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#140a1f;--pn:#2a1646;--ln:#4b2a7a;--or:#ff7a1a;--pu:#9b5cff;--tx:#fff1dc;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:radial-gradient(ellipse at 50% 0,#3a1b5e,var(--bg) 62%);color:var(--tx);font:500 20px Fredoka,system-ui,sans-serif}
+[hidden]{display:none!important}
+#app{height:100%;padding:14px}
+#hw,#game{height:100%;display:flex;flex-direction:column;gap:12px}
+h1{font:400 clamp(52px,12vw,104px)/1 Creepster,Georgia,serif;color:var(--or);margin:0;text-align:center;text-shadow:0 0 26px #ff7a1a99;letter-spacing:2px;animation:fl 7s infinite}
+@keyframes fl{0%,90%,94%,100%{opacity:1}92%,96%{opacity:.3}}
+.sub{text-align:center;margin:0;font-size:clamp(18px,3.4vw,28px);opacity:.85}
+#home{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:12px}
+.card{background:var(--pn);border:3px solid var(--ln);border-radius:24px;color:var(--tx);font:inherit;font-size:clamp(16px,3.3vw,27px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;line-height:1.1}
+.card b{font-size:clamp(44px,11vw,92px);font-weight:400;line-height:1}
+.card:active{transform:scale(.95);border-color:var(--or)}
+#bar{display:flex;align-items:center;gap:12px}
+#title{flex:1;text-align:center;font:400 clamp(30px,6vw,52px)/1 Creepster,Georgia,serif;color:var(--or)}
+#score{min-width:120px;text-align:right;font-size:26px;font-weight:700}
+.btn{background:var(--or);color:#2a0f00;border:0;border-radius:16px;font:700 26px Fredoka,sans-serif;padding:14px 22px;min-height:64px}
+.btn:active{transform:scale(.95)}
+#stage{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.msg{font-size:clamp(22px,4.2vw,32px);text-align:center;padding:0 12px}
+.g{display:grid;gap:10px;width:min(92vw,58vh)}
+.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+#stage button{background:var(--pn);border:3px solid var(--ln);border-radius:16px;color:var(--tx);font:700 clamp(28px,9vw,70px) Fredoka,sans-serif;padding:0}
+.g button{aspect-ratio:1}
+#stage .btn{background:var(--or);color:#2a0f00;border:0;font-size:26px;padding:14px 22px}
+#stage .on{background:#5a2d9a}
+#stage button:disabled{opacity:.55;color:var(--tx)}
+#stage .fl{filter:brightness(2.6);transform:scale(.95)}
+#stage .lt{background:#ffb02e;border-color:#ffd37a;box-shadow:0 0 24px #ff7a1a}
+canvas{aspect-ratio:3/4;height:min(54vh,120vw);background:#0d0616;border:3px solid var(--ln);border-radius:16px;touch-action:none}
+.pad{display:grid;grid-template-columns:repeat(3,92px);gap:8px}
+#stage .pad button{height:76px;font-size:34px;background:var(--ln)}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:94vw;min-height:80px}
+#stage .row button{width:clamp(50px,11vw,84px);aspect-ratio:1;font-size:clamp(26px,6vw,44px)}
+#stage .sl{border-style:dashed;background:transparent}
+.ov{position:absolute;inset:0;background:#140a1fe6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;z-index:5;text-align:center;font-size:32px;border-radius:20px}
+.ov b{font:400 clamp(60px,14vw,100px)/1 Creepster,Georgia,serif;color:var(--or)}
+@media (prefers-reduced-motion:reduce){h1{animation:none}}
+</style></head>
+<body><div id="app">
+<div id="hw"><h1>Haunted Arcade</h1><p class="sub">Cyber &amp; IT Lab. Tap a game to play!</p><div id="home"></div></div>
+<div id="game" hidden><div id="bar"><button class="btn" id="back">◀ Games</button><div id="title"></div><div id="score"></div></div><div id="stage"></div></div>
+</div>
+<script>
+const $=(q,r=document)=>r.querySelector(q),R=n=>Math.random()*n|0,sh=a=>a.sort(()=>Math.random()-.5);
+let tm=[],cur=-1,idle,AC;
+const later=(f,m)=>{const t=setTimeout(f,m);tm.push(t);return t},every=(f,m)=>{const t=setInterval(f,m);tm.push(t);return t};
+const stop=()=>{tm.forEach(t=>{clearTimeout(t);clearInterval(t)});tm=[]};
+function beep(f,d=.15){try{AC=AC||new(window.AudioContext||webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type='triangle';g.gain.value=.1;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const S=$('#stage'),SC=$('#score');
+function end(m){stop();const o=document.createElement('div');o.className='ov';o.innerHTML=`<b>${m[0]}</b><div>${m[1]}</div><div><button class="btn" id="ag">Play again</button> <button class="btn" id="hm" style="background:var(--pu);color:#fff">All games</button></div>`;S.append(o);$('#ag',o).onclick=()=>play(cur);$('#hm',o).onclick=home;beep(m[0].includes('!')&&!/Oops|Boo|over/.test(m[0])?880:200,.4)}
+
+/* 1. Ghost Tic-Tac-Toe */
+function ttt(s){
+ let b=Array(9).fill(''),done=0,busy=0;const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+ s.innerHTML='<div class="msg">Get three in a row. You are 🎃!</div><div class="g g3"></div>';
+ const g=$('.g',s),w=p=>L.some(l=>l.every(i=>b[i]==p)),draw=()=>g.innerHTML=b.map((v,i)=>`<button data-i="${i}">${v}</button>`).join('');
+ const need=p=>{for(const l of L){const e=l.filter(i=>!b[i]);if(e.length==1&&l.filter(i=>b[i]==p).length==2)return e[0]}return -1};
+ const chk=()=>{if(w('🎃'))end(['You win!','The ghost ran away 👻']);else if(w('👻'))end(['Boo!','The ghost got you. Try again!']);else if(b.every(x=>x))end(['A draw!','A spooky stalemate.']);else return 0;done=1;return 1};
+ draw();
+ g.onpointerdown=e=>{const i=+e.target.dataset.i;if(done||busy||isNaN(i)||b[i])return;b[i]='🎃';beep(520,.1);draw();if(chk())return;busy=1;
+  later(()=>{let k=Math.random()<.2?-1:need('👻');if(k<0)k=need('🎃');if(k<0&&!b[4])k=4;if(k<0||Math.random()<.12){const f=b.map((v,j)=>v?-1:j).filter(j=>j>=0);k=f[R(f.length)]}b[k]='👻';beep(220,.15);busy=0;draw();chk()},500)};
+}
+
+/* 2. Candy Maze */
+function maze(s){
+ const W=9,H=12,Z=60,c=Array(W*H).fill(15),seen=new Set([0]),st=[0],D=[[0,-1,1,4],[1,0,2,8],[0,1,4,1],[-1,0,8,2]];
+ while(st.length){const i=st[st.length-1],x=i%W,y=i/W|0,n=D.filter(d=>{const a=x+d[0],b=y+d[1];return a>=0&&b>=0&&a<W&&b<H&&!seen.has(b*W+a)});if(!n.length){st.pop();continue}const d=n[R(n.length)],j=i+d[1]*W+d[0];c[i]&=~d[2];c[j]&=~d[3];seen.add(j);st.push(j)}
+ let p=0,mv=0,won=0;
+ s.innerHTML='<canvas width="540" height="720"></canvas><div class="pad"><i></i><button data-d="0">▲</button><i></i><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button></div>';
+ const x=$('canvas',s).getContext('2d');
+ const draw=()=>{x.clearRect(0,0,540,720);x.strokeStyle='#ff7a1a';x.lineWidth=5;x.lineCap='round';x.beginPath();
+  c.forEach((v,i)=>{const X=i%W*Z,Y=(i/W|0)*Z;if(v&1){x.moveTo(X,Y);x.lineTo(X+Z,Y)}if(v&2){x.moveTo(X+Z,Y);x.lineTo(X+Z,Y+Z)}if(v&4){x.moveTo(X,Y+Z);x.lineTo(X+Z,Y+Z)}if(v&8){x.moveTo(X,Y);x.lineTo(X,Y+Z)}});x.stroke();
+  x.font='40px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🍬',(W-1)*Z+30,(H-1)*Z+32);x.fillText('🎃',p%W*Z+30,(p/W|0)*Z+32)};
+ const go=d=>{if(won||c[p]&(1<<d))return;p+=D[d][1]*W+D[d][0];mv++;SC.textContent=mv+' steps';beep(300+mv%8*25,.05);draw();if(p==W*H-1){won=1;end(['You escaped!',`Found the candy in ${mv} steps 🍬`])}};
+ $('.pad',s).onpointerdown=e=>{const d=e.target.dataset.d;if(d==null)return;go(+d);const t=setInterval(()=>go(+d),170);tm.push(t);const u=()=>clearInterval(t);addEventListener('pointerup',u,{once:true});addEventListener('pointercancel',u,{once:true})};
+ draw();
+}
+
+/* 3. Monster Match */
+function mem(s){
+ const E=['🎃','👻','🦇','🕷️','🧛','💀','🧙','🍬'],cs=sh([...E,...E]);let op=[],ok=0,mv=0,lock=0;
+ s.innerHTML='<div class="msg">Find all the matching pairs</div><div class="g g4">'+cs.map((e,i)=>`<button data-i="${i}">?</button>`).join('')+'</div>';
+ const g=$('.g',s),B=g.children;
+ g.onpointerdown=e=>{const i=+e.target.dataset.i;if(lock||isNaN(i)||op.includes(i)||B[i].disabled)return;B[i].textContent=cs[i];B[i].classList.add('on');op.push(i);beep(400,.08);
+  if(op.length==2){mv++;SC.textContent=mv+' tries';const[a,b]=op;
+   if(cs[a]==cs[b]){B[a].disabled=B[b].disabled=true;op=[];beep(700,.2);if(++ok==8)later(()=>end(['You found them all!',`In ${mv} tries 🧛`]),500)}
+   else{lock=1;later(()=>{[a,b].forEach(k=>{B[k].textContent='?';B[k].classList.remove('on')});op=[];lock=0},800)}}};
+}
+
+/* 4. Whack-a-Ghost */
+function whack(s){
+ let sc=0,t=30;
+ s.innerHTML='<div class="msg">Tap the ghosts 👻. Don’t touch the skulls 💀</div><div class="g g3">'+'<button></button>'.repeat(9)+'</div>';
+ const g=$('.g',s),B=[...g.children],up=()=>SC.textContent=`⏱ ${t}  ⭐ ${sc}`;up();
+ g.onpointerdown=e=>{const b=e.target,k=b.dataset.k;if(!k)return;sc=Math.max(0,sc+(k=='g'?1:-2));beep(k=='g'?700:150,.1);b.textContent='💥';delete b.dataset.k;up();later(()=>{if(!b.dataset.k)b.textContent=''},250)};
+ every(()=>{t--;up();if(t<=0)end(['Time’s up!',`You scored ${sc} points`])},1000);
+ every(()=>{const b=B[R(9)];if(b.dataset.k||b.textContent)return;const k=Math.random()<.75?'g':'s';b.dataset.k=k;b.textContent=k=='g'?'👻':'💀';later(()=>{if(b.dataset.k==k){delete b.dataset.k;b.textContent=''}},1000)},560);
+}
+
+/* 5. Treat Catcher */
+function catchG(s){
+ s.innerHTML='<div class="msg">Drag to move the basket. Dodge the spiders!</div><canvas width="540" height="720"></canvas>';
+ const cv=$('canvas',s),x=cv.getContext('2d');let bx=270,L=3,sc=0,it=[],f=0;
+ const mvTo=e=>{const r=cv.getBoundingClientRect();bx=Math.max(40,Math.min(500,(e.clientX-r.left)/r.width*540))};
+ cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);mvTo(e)};cv.onpointermove=mvTo;
+ const up=()=>SC.textContent='❤️'.repeat(Math.max(L,0))+'  ⭐ '+sc;up();
+ every(()=>{f++;if(f%Math.max(16,42-sc)==0)it.push({x:30+R(480),y:-30,v:4+Math.random()*3+sc/14,e:Math.random()<.3?'🕷️':['🍬','🍭','🎃'][R(3)]});
+  x.clearRect(0,0,540,720);x.font='44px serif';x.textAlign='center';x.textBaseline='middle';
+  it=it.filter(o=>{o.y+=o.v;if(o.y>650&&o.y<705&&Math.abs(o.x-bx)<58){if(o.e=='🕷️'){L--;beep(120,.3)}else{sc++;beep(800,.06)}up();return false}x.fillText(o.e,o.x,o.y);return o.y<740});
+  x.font='72px serif';x.fillText('🧺',bx,680);
+  if(L<=0)end(['Game over!',`You caught ${sc} treats 🍬`])},25);
+}
+
+/* 6. Spooky Simon */
+function simon(s){
+ const C=['🎃','👻','🦇','🕷️'],F=[262,330,392,523],K=['#ff7a1a','#9b5cff','#2fbf4a','#e03a3a'];
+ s.innerHTML='<div class="msg"></div><div class="g g2">'+C.map((c,i)=>`<button data-i="${i}" style="background:${K[i]}55;border-color:${K[i]}">${c}</button>`).join('')+'</div>';
+ const g=$('.g',s),B=[...g.children],m=$('.msg',s);let seq=[],pos=0,turn=0;
+ const flash=i=>{B[i].classList.add('fl');beep(F[i],.3);later(()=>B[i].classList.remove('fl'),320)};
+ const round=()=>{turn=0;pos=0;seq.push(R(4));SC.textContent='Round '+seq.length;m.textContent='Watch closely…';seq.forEach((v,k)=>later(()=>flash(v),700+k*600));later(()=>{turn=1;m.textContent='Your turn!'},700+seq.length*600)};
+ g.onpointerdown=e=>{const i=+e.target.dataset.i;if(!turn||isNaN(i))return;flash(i);if(i!=seq[pos]){turn=0;end(['Oops!',`You reached round ${seq.length} 🦇`]);return}if(++pos==seq.length){turn=0;later(round,800)}};
+ round();
+}
+
+/* 7. Word Witch (Halloween + cybersecurity words) */
+function word(s){
+ const W=[['PUMPKIN','Carved at Halloween'],['SKELETON','Rattling bones'],['VAMPIRE','Has fangs and a cape'],['FIREWALL','Blocks bad network traffic'],['PASSWORD','Keep it long and secret'],['MALWARE','Software that does harm'],['PHISHING','Fake emails that fish for info'],['WITCH','Rides a broomstick'],['ZOMBIE','Walks the night, wants brains'],['ENCRYPT','Scramble data so spies can’t read it']];
+ const Q=sh([...W]).slice(0,5);let r=0,sc=0,w,tl,an;
+ s.innerHTML='<div class="msg" id="h"></div><div class="row" id="a"></div><div class="row" id="l"></div><button class="btn" id="sk">Skip word</button>';
+ const show=()=>{$('#a',s).innerHTML=w.split('').map((_,i)=>`<button class="sl" data-a="${i}">${an[i]!=null?tl[an[i]]:''}</button>`).join('');$('#l',s).innerHTML=tl.map((c,i)=>`<button data-t="${i}" ${an.includes(i)?'disabled':''}>${c}</button>`).join('')};
+ const next=()=>{if(r>=5)return end(['Spell-tacular!',`You unscrambled ${sc} of 5`]);w=Q[r][0];$('#h',s).textContent=`Word ${r+1} of 5. Hint: ${Q[r][1]}`;do tl=sh(w.split(''));while(tl.join('')==w);an=[];SC.textContent='⭐ '+sc;show()};
+ s.onpointerdown=e=>{const b=e.target,d=b.dataset;if(b.id=='sk'){r++;return next()}
+  if(d.t!=null&&an.length<w.length){an.push(+d.t);beep(500,.05)}else if(d.a!=null&&an[+d.a]!=null){an.splice(+d.a,1)}else return;show();
+  if(an.length==w.length){if(an.map(i=>tl[i]).join('')==w){sc++;r++;beep(880,.3);$('#h',s).textContent='Correct! 🎉';later(next,800)}else $('#h',s).textContent='Not quite. Tap a letter slot to remove it.'}};
+ next();
+}
+
+/* 8. Slide Puzzle */
+function slide(s){
+ const E=['🎃','👻','🦇','🕷️','🧛','💀','🧙','🍬',''];let a=[...E.keys()],e=8,mv=0;
+ const adj=i=>[i-3,i+3,i%3?i-1:-1,i%3<2?i+1:-1].filter(j=>j>=0&&j<9);
+ for(let k=0;k<120;k++){const n=adj(e),j=n[R(n.length)];[a[e],a[j]]=[a[j],a[e]];e=j}
+ s.innerHTML='<div class="msg">Slide the tiles into this order:<br>🎃 👻 🦇 / 🕷️ 🧛 💀 / 🧙 🍬</div><div class="g g3"></div>';
+ const g=$('.g',s),draw=()=>g.innerHTML=a.map((v,i)=>`<button data-i="${i}" ${v==8?'style="visibility:hidden"':''}>${E[v]}</button>`).join('');draw();
+ g.onpointerdown=ev=>{const i=+ev.target.dataset.i;if(isNaN(i)||!adj(e).includes(i))return;[a[e],a[i]]=[a[i],a[e]];e=i;mv++;SC.textContent=mv+' moves';beep(350,.06);draw();if(a.every((v,k)=>v==k))end(['Solved!',`Done in ${mv} moves 💀`])};
+}
+
+/* 9. Pumpkin Lights Out */
+function lights(s){
+ let a=Array(25).fill(0),mv=0;
+ const tog=i=>{const x=i%5,y=i/5|0;[[0,0],[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<5&&Y<5)a[Y*5+X]^=1})};
+ for(let k=0;k<9;k++)tog(R(25));if(!a.some(v=>v))tog(12);
+ s.innerHTML='<div class="msg">Turn off every jack-o’-lantern.<br>Each tap flips its neighbors too!</div><div class="g g5"></div>';
+ const g=$('.g',s),draw=()=>g.innerHTML=a.map((v,i)=>`<button class="${v?'lt':''}" data-i="${i}">${v?'🎃':''}</button>`).join('');draw();
+ g.onpointerdown=e=>{const i=+e.target.dataset.i;if(isNaN(i))return;tog(i);mv++;SC.textContent=mv+' taps';beep(300+a.filter(v=>v).length*30,.08);draw();if(!a.some(v=>v))end(['Lights out!',`Cleared in ${mv} taps 🎃`])};
+}
+
+const G=[['Ghost Tic-Tac-Toe','👻',ttt],['Candy Maze','🍬',maze],['Monster Match','🧛',mem],['Whack-a-Ghost','🔨',whack],['Treat Catcher','🧺',catchG],['Spooky Simon','🦇',simon],['Word Witch','🧙',word],['Slide Puzzle','💀',slide],['Lights Out','🎃',lights]];
+$('#home').innerHTML=G.map((g,i)=>`<button class="card" data-i="${i}"><b>${g[1]}</b>${g[0]}</button>`).join('');
+$('#home').onclick=e=>{const c=e.target.closest('.card');if(c)play(+c.dataset.i)};
+function play(i){stop();cur=i;S.onpointerdown=null;S.innerHTML='';SC.textContent='';$('#title').textContent=G[i][0];$('#hw').hidden=true;$('#game').hidden=false;G[i][2](S)}
+function home(){stop();cur=-1;S.onpointerdown=null;S.innerHTML='';$('#game').hidden=true;$('#hw').hidden=false}
+$('#back').onclick=home;
+/* kiosk: return to menu after 90s without a touch; block context menu and zoom gestures */
+addEventListener('pointerdown',()=>{clearTimeout(idle);idle=setTimeout(()=>{if(cur>=0)home()},90000)});
+addEventListener('contextmenu',e=>e.preventDefault());
+['gesturestart','dblclick'].forEach(n=>addEventListener(n,e=>e.preventDefault()));
+</script></body></html>
